@@ -4,6 +4,15 @@
 
 Northstar is an app for tracking your gym activites, your best PR's and getting an AI overview of your latest activity.
 
+
+## Proje Ekibi
+
+**Grup Adı:** 
+Northstar
+
+**Ekip Üyeleri:** 
+- Ahmet Mert Bayraktar
+
 ## Vizyon ve Hedefler
 
 Bu proje, spor salonu kullanıcılarının yaşadığı "disiplin" ve "doğru program" sorunlarını çözmeyi amaçlar. Temel hedeflerimiz:
