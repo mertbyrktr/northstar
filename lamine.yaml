@@ -182,3 +182,4 @@ components:
       properties:
         height: {type: number, example: 180}
         weight: {type: number, example: 75.5}
+        
