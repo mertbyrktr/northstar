@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: Fitness Takip ve Analiz API'si
+  version: 1.0.0
+  description: >
+    Bu API, kullanıcıların antrenmanlarını kaydetmelerine, fiziksel gelişimlerini 
+    takip etmelerine ve yapay zeka destekli antrenman önerileri almalarına olanak tanır.
+  contact:
+    name: Ahmet Mert Bayraktar
+    email: l2321032070@ogr.sdu.edu.tr
+
+servers:
+  - url: http://localhost:3000/api/v1
+    [cite_start]description: Yerel geliştirme sunucusu [cite: 313]
+
+tags:
+  - name: Kimlik Doğrulama
+    description: Kayıt ve giriş işlemleri
+  - name: Antrenmanlar
+    description: Antrenman listeleme ve egzersiz yönetimi
+  - name: Profil ve Metrikler
+    description: Kullanıcı bilgileri ve kilo takibi
+  - name: Hedefler ve Yapay Zeka
+    description: Fitness hedefleri ve AI önerileri
+
+security:
+  - [cite_start]BearerAuth: [] [cite: 618]
+
+paths:
+  # 1. Kullanıcı Kaydı & 2. Kullanıcı Girişi
+  /auth/register:
+    post:
+      tags: [Kimlik Doğrulama]
+      summary: Kullanıcı Kaydı
+      description: Sisteme yeni bir kullanıcı profili oluşturur.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        "201":
+          [cite_start]description: Kayıt başarılı [cite: 127]
+
+  /auth/login:
+    post:
+      tags: [Kimlik Doğrulama]
+      summary: Kullanıcı Girişi
+      description: Kimlik doğrulaması yaparak erişim yetkisi verir.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: {type: string, format: email}
+                password: {type: string}
+      responses:
+        "200":
+          [cite_start]description: Giriş başarılı, token döndürülür. [cite: 127]
+
+  # 4. Antrenman Listeleme
+  /workouts:
+    get:
+      tags: [Antrenmanlar]
+      summary: Antrenman Listeleme
+      description: Geçmiş antrenmanları tarih bazlı listeler.
+      operationId: listWorkouts
+      responses:
+        "200":
+          description: Liste başarıyla getirildi.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workout'
+
+  # 3. Egzersiz Ekleme
+  /workouts/exercises:
+    post:
+      tags: [Antrenmanlar]
+      summary: Egzersiz Ekleme
+      description: Antrenmana yeni bir egzersiz tanımı ekler.
+      operationId: addExercise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseInput'
+      responses:
+        "201":
+          description: Egzersiz eklendi.
+
+  # 5. Egzersiz Detaylarını Gör, 8. Egzersiz Kaydını Silme
+  /exercises/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        [cite_start]schema: {type: string} [cite: 389]
+    get:
+      tags: [Antrenmanlar]
+      summary: Egzersiz Detaylarını Gör
+      description: Set ve tekrar detaylarını getirir.
+      responses:
+        "200":
+          description: Detaylar başarıyla getirildi.
+    delete:
+      tags: [Antrenmanlar]
+      summary: Egzersiz Kaydını Silme
+      description: Yanlış girilen egzersiz verisini kaldırır.
+      responses:
+        "204":
+          [cite_start]description: Silme başarılı. [cite: 127]
+
+  # 6. Profil Bilgisi Güncelleme
+  /users/profile:
+    put:
+      tags: [Profil ve Metrikler]
+      summary: Profil Güncelleme
+      description: Boy ve kilo gibi fiziksel bilgileri günceller.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        "200":
+          description: Profil güncellendi.
+
+  # 12. Yapay Zeka Destekli Antrenman Önerisi
+  /ai/recommendations:
+    post:
+      tags: [Hedefler ve Yapay Zeka]
+      summary: AI Antrenman Önerisi
+      description: Geçmiş verileri analiz ederek program oluşturur.
+      responses:
+        "200":
+          description: Öneri oluşturuldu.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      [cite_start]bearerFormat: JWT [cite: 592]
+
+  schemas:
+    UserInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: {type: string, example: "Can Yılmaz"}
+        email: {type: string, format: email}
+        [cite_start]password: {type: string, minLength: 8} [cite: 648]
+
+    Workout:
+      type: object
+      properties:
+        id: {type: string}
+        [cite_start]date: {type: string, format: date-time} [cite: 648]
+        exercises: 
+          type: array
+          items: {type: string}
+
+    ExerciseInput:
+      type: object
+      properties:
+        name: {type: string, example: "Bench Press"}
+        [cite_start]sets: {type: integer, minimum: 1} [cite: 648]
+        reps: {type: integer, minimum: 1}
+        weight: {type: number}
+
+    UserProfile:
+      type: object
+      properties:
+        height: {type: number, example: 180}
+        weight: {type: number, example: 75.5}
