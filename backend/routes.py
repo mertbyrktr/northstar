@@ -65,6 +65,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @router.post("/workouts/exercises", response_model=ExerciseResponse)
 async def add_exercise(exercise: ExerciseAdd, current_user: dict = Depends(get_current_user)):
     db = get_db()
+    if not ObjectId.is_valid(exercise.workout_id):
+        raise HTTPException(status_code=400, detail="Invalid Workout ID format. Please provide a valid 24-character MongoDB hex ID.")
     
     # Ensure there's a workout entry representing this workout_id owned by this user
     await db.workouts.update_one(
@@ -188,6 +190,19 @@ async def track_weight(metric: WeightMetric, current_user: dict = Depends(get_cu
     new_metric["user_id"] = current_user["id"]
     result = await db.metrics.insert_one(new_metric)
     return {"message": "Weight recorded successfully", "id": str(result.inserted_id)}
+
+# 13. Antrenman Silme
+@router.delete("/workouts/{id}")
+async def delete_workout(id: str, current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid Workout ID format")
+    workout = await db.workouts.find_one({"_id": ObjectId(id), "user_id": current_user["id"]})
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found or not authorized")
+    await db.workouts.delete_one({"_id": ObjectId(id)})
+    await db.exercises.delete_many({"workout_id": id})
+    return {"message": "Workout and associated exercises deleted successfully"}
 
 # 12. Yapay Zeka Destekli Antrenman Önerisi (Mocked)
 @router.post("/ai/recommendations", response_model=AIRecommendationResponse)

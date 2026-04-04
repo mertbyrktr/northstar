@@ -80,6 +80,21 @@ paths:
                 items:
                   $ref: '#/components/schemas/Workout'
 
+  # 13. Antrenman Silme
+  /workouts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string}
+    delete:
+      tags: [Antrenmanlar]
+      summary: Antrenman Silme
+      description: Belirtilen antrenmanı ve bağlı tüm egzersiz kayıtlarını siler.
+      responses:
+        "200":
+          description: Silme başarılı.
+
   # 3. Egzersiz Ekleme
   /workouts/exercises:
     post:

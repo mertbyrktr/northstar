@@ -49,3 +49,7 @@
 12. **Yapay Zeka Destekli Antrenman Önerisi**
     - **API Metodu:** `POST /ai/recommendations`
     - **Açıklama:** (AI-Based) Kullanıcının geçmiş verilerini analiz ederek o gün yapması gereken en uygun antrenman programını oluşturur.
+
+13. **Antrenman Silme**
+    - **API Metodu:** `DELETE /workouts/{id}`
+    - **Açıklama:** Belirtilen antrenmanı ve bu antrenmana bağlı tüm egzersiz kayıtlarını sistemden kalıcı olarak siler.
