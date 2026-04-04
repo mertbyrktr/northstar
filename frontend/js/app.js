@@ -4,6 +4,7 @@ let currentView = 'auth';
 let isAuthed = false;
 let globalWorkoutsData = [];
 let progressChartInstance = null;
+let weightChartInstance = null;
 
 // DOM Elements
 const views = {
@@ -54,6 +55,8 @@ function switchView(viewName) {
         document.getElementById(`btn-${viewName}`).classList.add('active');
         
         if (viewName === 'dashboard' || viewName === 'tracker') loadWorkouts();
+        if (viewName === 'profile') loadProfile();
+        if (viewName === 'tracker') loadWeightChart();
     }
 }
 
@@ -201,6 +204,34 @@ async function handleAddExercise(e) {
 }
 
 // ------ AI & Profile ------
+async function loadProfile() {
+    try {
+        const profile = await API.getProfile();
+        if (profile) {
+            document.getElementById('profile-welcome-tag').innerText = `Welcome, ${profile.name}`;
+            document.getElementById('prof-weight').value = profile.weight || '';
+            document.getElementById('prof-height').value = profile.height || '';
+            document.getElementById('prof-age').value = profile.age || '';
+            
+            document.getElementById('disp-weight').innerText = profile.weight || '--';
+            document.getElementById('disp-height').innerText = profile.height || '--';
+            document.getElementById('disp-age').innerText = profile.age || '--';
+        }
+    } catch (e) { console.error("Profile load failed", e); }
+}
+
+function toggleProfileEdit() {
+    const disp = document.getElementById('profile-display-card');
+    const edit = document.getElementById('profile-edit-card');
+    if (disp.classList.contains('hidden')) {
+        disp.classList.remove('hidden');
+        edit.classList.add('hidden');
+    } else {
+        disp.classList.add('hidden');
+        edit.classList.remove('hidden');
+    }
+}
+
 async function handleProfileUpdate(e) {
     e.preventDefault();
     const btn = document.querySelector('#profile-form button');
@@ -211,7 +242,10 @@ async function handleProfileUpdate(e) {
     btn.innerText = 'Saving...';
     try {
         await API.updateProfile(w, h, a);
+        if (w) await API.logWeight(w); // Push to metrics folder for graph
         alert('Profile saved!');
+        toggleProfileEdit();
+        loadProfile();
     } catch (err) {
         alert('Failed: ' + err.message);
     } finally {
@@ -307,4 +341,55 @@ function updateTrackerGraph() {
             plugins: { legend: { labels: { color: '#f8fafc', font: { size: 14 } } } }
         }
     });
+}
+
+async function loadWeightChart() {
+    try {
+        const metrics = await API.getWeightMetrics();
+        const container = document.getElementById('weightChart').parentElement;
+
+        if (metrics.length === 0) {
+            if (weightChartInstance) { weightChartInstance.destroy(); weightChartInstance = null; }
+            container.innerHTML = '<canvas id="weightChart"></canvas><div class="glow-text" style="position:absolute; top:40%; left:0; right:0; text-align:center;">No weight history logged yet.<br>Go to Profile > Edit Profile to log!</div>';
+            return;
+        } else {
+            if (!document.getElementById('weightChart')) {
+                container.innerHTML = '<canvas id="weightChart"></canvas>';
+            }
+        }
+
+        const dataPoints = metrics.map(m => ({ x: new Date(m.date), y: m.weight }));
+        dataPoints.sort((a,b) => a.x - b.x);
+
+        const ctx = document.getElementById('weightChart').getContext('2d');
+        if (weightChartInstance) weightChartInstance.destroy();
+
+        weightChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataPoints.map(dp => dp.x.toLocaleDateString()),
+                datasets: [{
+                    label: 'Body Weight (kg)',
+                    data: dataPoints.map(dp => dp.y),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#f8fafc',
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { labels: { color: '#f8fafc', font: { size: 14 } } } }
+            }
+        });
+    } catch (e) {
+        console.error("Weight chart load failed", e);
+    }
 }

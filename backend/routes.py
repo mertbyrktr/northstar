@@ -127,6 +127,19 @@ async def update_profile(profile: UserProfileUpdate, current_user: dict = Depend
     await db.users.update_one({"_id": ObjectId(current_user["id"])}, {"$set": update_data})
     return {"message": "Profile updated successfully"}
 
+# GET Profil Bilgisi
+@router.get("/users/profile")
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    user = await db.users.find_one({"_id": ObjectId(current_user["id"])})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user["id"] = str(user["_id"])
+    del user["_id"]
+    if "password" in user:
+        del user["password"]
+    return user
+
 # 7. Antrenman Notu Düzenleme
 @router.put("/workouts/{id}/notes")
 async def update_workout_notes(id: str, note_data: WorkoutNoteUpdate, current_user: dict = Depends(get_current_user)):
@@ -190,6 +203,17 @@ async def track_weight(metric: WeightMetric, current_user: dict = Depends(get_cu
     new_metric["user_id"] = current_user["id"]
     result = await db.metrics.insert_one(new_metric)
     return {"message": "Weight recorded successfully", "id": str(result.inserted_id)}
+
+# GET Ağırlık Takibi Geçmişi
+@router.get("/metrics/weight")
+async def get_weight_history(current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    cursor = db.metrics.find({"user_id": current_user["id"]}).sort("date", 1)
+    metrics = await cursor.to_list(length=100)
+    for m in metrics:
+        m["id"] = str(m["_id"])
+        del m["_id"]
+    return metrics
 
 # 13. Antrenman Silme
 @router.delete("/workouts/{id}")

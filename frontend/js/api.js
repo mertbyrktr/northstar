@@ -58,8 +58,17 @@ class API {
     static async deleteExercise(id) { return await this.request(`/exercises/${id}`, 'DELETE'); }
     
     // PROFILE & AI
+    static async getProfile() { 
+        return await this.request('/users/profile').catch(() => null); 
+    }
     static async updateProfile(weight, height, age) { 
         return await this.request('/users/profile', 'PUT', { weight: parseFloat(weight), height: parseFloat(height), age: parseInt(age) }); 
+    }
+    static async getWeightMetrics() {
+        return await this.request('/metrics/weight').catch(() => []);
+    }
+    static async logWeight(weight) {
+        return await this.request('/metrics/weight', 'POST', { weight: parseFloat(weight) });
     }
     static async getAIRecommendation() { 
         return await this.request('/ai/recommendations', 'POST', { current_focus: "general fitness" }); 

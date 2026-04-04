@@ -68,9 +68,25 @@
 
         <!-- Profile View -->
         <section id="profile-view" class="view hidden">
+            <h2 id="profile-welcome-tag" class="glow-text" style="text-align:center; margin-bottom: 2rem;">Welcome</h2>
             <div class="profile-layout">
-                <div class="glass-card stat-card">
-                    <h3>Update Profile</h3>
+                <div class="glass-card stat-card" id="profile-display-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Your Physical Attributes</h3>
+                        <button class="primary-btn small-btn" onclick="toggleProfileEdit()">Edit Profile</button>
+                    </div>
+                    <div style="font-size: 1.1rem; line-height: 2;">
+                        <p><strong>Weight:</strong> <span id="disp-weight">--</span> kg</p>
+                        <p><strong>Height:</strong> <span id="disp-height">--</span> cm</p>
+                        <p><strong>Age:</strong> <span id="disp-age">--</span></p>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card hidden" id="profile-edit-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>Update Physical Attributes</h3>
+                        <button class="del-btn" onclick="toggleProfileEdit()">Cancel</button>
+                    </div>
                     <form id="profile-form" onsubmit="handleProfileUpdate(event)">
                         <div class="input-group"><input type="number" step="0.1" id="prof-weight" placeholder="Weight (kg)"></div>
                         <div class="input-group"><input type="number" step="0.1" id="prof-height" placeholder="Height (cm)"></div>
@@ -93,15 +109,26 @@
 
         <!-- Tracker View -->
         <section id="tracker-view" class="view hidden">
-            <div class="glass-card stat-card" style="margin-top: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h3>Progress Tracker</h3>
-                    <select id="tracker-exercise-select" class="glow-btn" style="padding: 0.8rem; border-radius: 8px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid var(--glass-border); font-size:1rem;" onchange="updateTrackerGraph()">
-                        <option value="">Select an exercise...</option>
-                    </select>
+            <div class="profile-layout">
+                <div class="glass-card stat-card" style="margin-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>Exercise Progress</h3>
+                        <select id="tracker-exercise-select" class="glow-btn" style="padding: 0.5rem; border-radius: 8px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid var(--glass-border); font-size:1rem;" onchange="updateTrackerGraph()">
+                            <option value="">Select an exercise...</option>
+                        </select>
+                    </div>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
                 </div>
-                <div style="position: relative; height: 350px; width: 100%;">
-                    <canvas id="progressChart"></canvas>
+
+                <div class="glass-card stat-card" style="margin-top: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>Body Weight History</h3>
+                    </div>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="weightChart"></canvas>
+                    </div>
                 </div>
             </div>
         </section>
