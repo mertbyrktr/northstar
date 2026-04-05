@@ -57,6 +57,12 @@ class API {
     }
     static async deleteExercise(id) { return await this.request(`/exercises/${id}`, 'DELETE'); }
     
+    // GOALS
+    static async getGoals() { return await this.request('/goals').catch(() => []); }
+    static async addGoal(title) { return await this.request('/goals', 'POST', { title }); }
+    static async deleteGoal(id) { return await this.request(`/goals/${id}`, 'DELETE'); }
+    static async toggleGoal(id) { return await this.request(`/goals/${id}/toggle`, 'PUT'); }
+    
     // PROFILE & AI
     static async getProfile() { 
         return await this.request('/users/profile').catch(() => null); 

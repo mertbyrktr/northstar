@@ -184,6 +184,27 @@ async def add_goal(goal: GoalAdd, current_user: dict = Depends(get_current_user)
     created_goal = await db.goals.find_one({"_id": result.inserted_id})
     return fix_id(created_goal)
 
+# GET Hedefleri Listeleme
+@router.get("/goals", response_model=List[GoalResponse])
+async def get_goals(current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    cursor = db.goals.find({"user_id": current_user["id"]})
+    goals = await cursor.to_list(length=100)
+    return [fix_id(g) for g in goals]
+
+# PUT Hedef Tamamlanma Durumu (Toggle)
+@router.put("/goals/{id}/toggle")
+async def toggle_goal(id: str, current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid Goal ID")
+    goal = await db.goals.find_one({"_id": ObjectId(id), "user_id": current_user["id"]})
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    new_status = not goal.get("is_completed", False)
+    await db.goals.update_one({"_id": ObjectId(id)}, {"$set": {"is_completed": new_status}})
+    return {"message": "Goal toggled"}
+
 # 10. Hedef Silme
 @router.delete("/goals/{id}")
 async def delete_goal(id: str, current_user: dict = Depends(get_current_user)):

@@ -6,21 +6,29 @@ let globalWorkoutsData = [];
 let progressChartInstance = null;
 let weightChartInstance = null;
 
+// Timezone Helper: Backend sends naive UTC datetimes, we append 'Z' to parse as UTC exactly.
+function parseUTCDate(dateStr) {
+    if (!dateStr) return new Date();
+    return new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+}
+
 // DOM Elements
 const views = {
     auth: document.getElementById('auth-view'),
     dashboard: document.getElementById('dashboard-view'),
     profile: document.getElementById('profile-view'),
-    tracker: document.getElementById('tracker-view')
+    tracker: document.getElementById('tracker-view'),
+    goals: document.getElementById('goals-view')
 };
 const navbar = document.getElementById('navbar');
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    
+
     // Nav Binds
     document.getElementById('btn-dashboard').onclick = () => switchView('dashboard');
+    document.getElementById('btn-goals').onclick = () => switchView('goals');
     document.getElementById('btn-profile').onclick = () => switchView('profile');
     document.getElementById('btn-tracker').onclick = () => switchView('tracker');
     document.getElementById('btn-logout').onclick = handleLogout;
@@ -53,10 +61,11 @@ function switchView(viewName) {
         navbar.classList.remove('hidden');
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`btn-${viewName}`).classList.add('active');
-        
+
         if (viewName === 'dashboard' || viewName === 'tracker') loadWorkouts();
         if (viewName === 'profile') loadProfile();
         if (viewName === 'tracker') loadWeightChart();
+        if (viewName === 'goals') loadGoals();
     }
 }
 
@@ -65,11 +74,11 @@ function switchAuthTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
-    
+
     const nameGroup = document.getElementById('name-group');
     const submitText = document.getElementById('auth-submit-text');
     const err = document.getElementById('auth-error');
-    
+
     err.innerText = '';
     if (tab === 'register') {
         nameGroup.style.display = 'block';
@@ -85,13 +94,13 @@ async function handleAuth(e) {
     const btn = document.querySelector('#auth-form button');
     const err = document.getElementById('auth-error');
     err.innerText = '';
-    
+
     const email = document.getElementById('auth-email').value;
     const pass = document.getElementById('auth-password').value;
     const name = document.getElementById('auth-name').value;
-    
+
     btn.innerHTML = `<span class="spinner"></span> Processing...`;
-    
+
     try {
         if (currentTab === 'register') {
             await API.register(name, email, pass);
@@ -122,24 +131,24 @@ async function loadWorkouts() {
         const workouts = await API.getWorkouts();
         globalWorkoutsData = workouts;
         updateGlobalExerciseData();
-        
+
         if (workouts.length === 0) {
             if (grid) grid.innerHTML = '<div class="subtitle">No workouts found. Add one to start tracking!</div>';
             return;
         }
-        
+
         if (grid) grid.innerHTML = workouts.map(w => `
             <div class="glass-card workout-card">
                 <h3>
-                    <span>Workout <span class="workout-date">(${new Date(w.date).toLocaleDateString()})</span></span>
+                    <span>Workout <span class="workout-date">(${parseUTCDate(w.date).toLocaleDateString()})</span></span>
                     <div style="display: flex; align-items: center;">
                         <button class="primary-btn small-btn" style="margin-right:0.6rem; padding: 0.3rem 0.6rem;" onclick="openWorkoutModal('${w.id}')">+ Exercise</button>
                         <button class="del-btn" onclick="deleteWorkout('${w.id}')">✖</button>
                     </div>
                 </h3>
                 <div class="exercises-list">
-                    ${w.exercises.length === 0 ? '<em class="text-muted">Empty workout</em>' : 
-                      w.exercises.map(ex => `
+                    ${w.exercises.length === 0 ? '<em class="text-muted">Empty workout</em>' :
+                w.exercises.map(ex => `
                         <div class="exercise-pill">
                             <span>${ex.name} <span class="exercise-meta">${ex.sets}x${ex.reps}</span></span>
                             <div style="display:flex; gap:10px; align-items:center;">
@@ -157,7 +166,7 @@ async function loadWorkouts() {
 }
 
 async function deleteWorkout(id) {
-    if(!confirm('Are you sure you want to delete this entire workout?')) return;
+    if (!confirm('Are you sure you want to delete this entire workout?')) return;
     await API.deleteWorkout(id);
     loadWorkouts();
 }
@@ -181,14 +190,14 @@ function closeModal(e) {
 async function handleAddExercise(e) {
     e.preventDefault();
     const btn = document.querySelector('#exercise-form button');
-    
+
     const wid = document.getElementById('ex-workout-id').value;
     const name = document.getElementById('ex-name').value;
     const sets = document.getElementById('ex-sets').value;
     const reps = document.getElementById('ex-reps').value;
     const weight = document.getElementById('ex-weight').value;
-    
-    const actualWid = wid.trim() === '' ? '000000000000000000000000'.replace(/0/g, () => (~~(Math.random()*16)).toString(16)) : wid; // Generate fake 24 char hex if empty
+
+    const actualWid = wid.trim() === '' ? '000000000000000000000000'.replace(/0/g, () => (~~(Math.random() * 16)).toString(16)) : wid; // Generate fake 24 char hex if empty
 
     btn.innerText = 'Saving...';
     try {
@@ -203,6 +212,66 @@ async function handleAddExercise(e) {
     }
 }
 
+// ------ Modals / Goals Logic ------
+function openGoalModal() {
+    document.getElementById('goal-modal-backdrop').classList.remove('hidden');
+}
+function closeGoalModal(e) {
+    if (e.target.id === 'goal-modal-backdrop') {
+        document.getElementById('goal-modal-backdrop').classList.add('hidden');
+    }
+}
+
+async function loadGoals() {
+    const grid = document.getElementById('goals-grid');
+    if (grid) grid.innerHTML = '<div class="glow-text">Loading goals...</div>';
+    try {
+        const goals = await API.getGoals();
+        if (goals.length === 0) {
+            if (grid) grid.innerHTML = '<div class="subtitle">No goals mapped yet. Add one!</div>';
+            return;
+        }
+        if (grid) grid.innerHTML = goals.map(g => `
+            <div class="glass-card workout-card" style="border: 2px solid ${g.is_completed ? '#22c55e' : 'var(--glass-border)'}; opacity: ${g.is_completed ? 0.6 : 1}">
+                <h3 style="text-decoration: ${g.is_completed ? 'line-through' : 'none'}">${g.title}</h3>
+                <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <button class="secondary-btn small-btn" onclick="toggleGoal('${g.id}')">${g.is_completed ? 'Undo' : 'Complete'}</button>
+                    <button class="del-btn" onclick="deleteGoal('${g.id}')">✖</button>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        if (grid) grid.innerHTML = `<div class="error-msg">Failed: ${e.message}</div>`;
+    }
+}
+
+async function handleAddGoal(e) {
+    e.preventDefault();
+    const btn = document.querySelector('#goal-form button');
+    const title = document.getElementById('goal-title').value;
+    btn.innerText = 'Saving...';
+    try {
+        await API.addGoal(title);
+        document.getElementById('goal-form').reset();
+        document.getElementById('goal-modal-backdrop').classList.add('hidden');
+        loadGoals();
+    } catch(err) {
+        alert("Error adding goal: " + err.message);
+    } finally {
+        btn.innerText = 'Save Goal';
+    }
+}
+
+async function toggleGoal(id) {
+    await API.toggleGoal(id);
+    loadGoals();
+}
+
+async function deleteGoal(id) {
+    await API.deleteGoal(id);
+    loadGoals();
+}
+
 // ------ AI & Profile ------
 async function loadProfile() {
     try {
@@ -212,7 +281,7 @@ async function loadProfile() {
             document.getElementById('prof-weight').value = profile.weight || '';
             document.getElementById('prof-height').value = profile.height || '';
             document.getElementById('prof-age').value = profile.age || '';
-            
+
             document.getElementById('disp-weight').innerText = profile.weight || '--';
             document.getElementById('disp-height').innerText = profile.height || '--';
             document.getElementById('disp-age').innerText = profile.age || '--';
@@ -238,7 +307,7 @@ async function handleProfileUpdate(e) {
     const w = document.getElementById('prof-weight').value;
     const h = document.getElementById('prof-height').value;
     const a = document.getElementById('prof-age').value;
-    
+
     btn.innerText = 'Saving...';
     try {
         await API.updateProfile(w, h, a);
@@ -285,9 +354,9 @@ function updateGlobalExerciseData() {
     const select = document.getElementById('tracker-exercise-select');
     if (select) {
         const currentVal = select.value;
-        select.innerHTML = '<option value="">Select an exercise...</option>' + 
+        select.innerHTML = '<option value="">Select an exercise...</option>' +
             sortedNames.map(name => `<option value="${name}" ${currentVal === name ? 'selected' : ''}>${capitalize(name)}</option>`).join('');
-        
+
         if (currentVal && sortedNames.includes(currentVal)) {
             updateTrackerGraph();
         } else if (sortedNames.length > 0 && currentView === 'tracker') {
@@ -307,10 +376,10 @@ function updateTrackerGraph() {
         const matchingExercises = w.exercises.filter(ex => ex.name.trim().toLowerCase() === selectedName);
         if (matchingExercises.length > 0) {
             const maxWeight = Math.max(...matchingExercises.map(ex => ex.weight));
-            dataPoints.push({ x: new Date(w.date), y: maxWeight });
+            dataPoints.push({ x: parseUTCDate(w.date), y: maxWeight });
         }
     });
-    dataPoints.sort((a,b) => a.x - b.x);
+    dataPoints.sort((a, b) => a.x - b.x);
 
     const ctx = document.getElementById('progressChart').getContext('2d');
     if (progressChartInstance) progressChartInstance.destroy();
@@ -358,8 +427,8 @@ async function loadWeightChart() {
             }
         }
 
-        const dataPoints = metrics.map(m => ({ x: new Date(m.date), y: m.weight }));
-        dataPoints.sort((a,b) => a.x - b.x);
+        const dataPoints = metrics.map(m => ({ x: parseUTCDate(m.date), y: m.weight }));
+        dataPoints.sort((a, b) => a.x - b.x);
 
         const ctx = document.getElementById('weightChart').getContext('2d');
         if (weightChartInstance) weightChartInstance.destroy();

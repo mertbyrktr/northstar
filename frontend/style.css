@@ -119,6 +119,16 @@ input:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(59, 130, 2
     cursor: pointer; transition: all 0.3s ease;
 }
 .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px var(--primary-glow); }
+
+.secondary-btn {
+    width: 100%; padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    color: white; font-weight: 600; font-size: 1rem;
+    cursor: pointer; transition: all 0.3s ease;
+}
+.secondary-btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); }
+
 .small-btn { padding: 0.5rem 1rem; width: auto; font-size: 0.85rem; }
 
 /* Tabs */
