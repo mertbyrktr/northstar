@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Ensure Vercel serverless functions can resolve local 'backend' directory module imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
