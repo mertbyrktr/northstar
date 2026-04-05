@@ -4,6 +4,7 @@ let currentView = 'auth';
 let isAuthed = false;
 let globalWorkoutsData = [];
 let progressChartInstance = null;
+let volumeChartInstance = null;
 let weightChartInstance = null;
 
 // Timezone Helper: Backend sends naive UTC datetimes, we append 'Z' to parse as UTC exactly.
@@ -360,19 +361,24 @@ function updateTrackerGraph() {
     if (!selectedName) return;
 
     const dataPoints = [];
+    const volumePoints = [];
     globalWorkoutsData.forEach(w => {
         const matchingExercises = w.exercises.filter(ex => ex.name.trim().toLowerCase() === selectedName);
         if (matchingExercises.length > 0) {
             const maxWeight = Math.max(...matchingExercises.map(ex => ex.weight));
             dataPoints.push({ x: parseUTCDate(w.date), y: maxWeight });
+
+            const totalVolume = matchingExercises.reduce((sum, ex) => sum + (ex.sets * ex.reps * ex.weight), 0);
+            volumePoints.push({ x: parseUTCDate(w.date), y: totalVolume });
         }
     });
     dataPoints.sort((a, b) => a.x - b.x);
+    volumePoints.sort((a, b) => a.x - b.x);
 
-    const ctx = document.getElementById('progressChart').getContext('2d');
+    const ctxProgress = document.getElementById('progressChart').getContext('2d');
     if (progressChartInstance) progressChartInstance.destroy();
 
-    progressChartInstance = new Chart(ctx, {
+    progressChartInstance = new Chart(ctxProgress, {
         type: 'line',
         data: {
             labels: dataPoints.map(dp => dp.x.toLocaleDateString()),
@@ -394,6 +400,33 @@ function updateTrackerGraph() {
             scales: {
                 y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
                 x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+            },
+            plugins: { legend: { labels: { color: '#f8fafc', font: { size: 14 } } } }
+        }
+    });
+
+    const ctxVolume = document.getElementById('volumeChart').getContext('2d');
+    if (volumeChartInstance) volumeChartInstance.destroy();
+
+    volumeChartInstance = new Chart(ctxVolume, {
+        type: 'bar',
+        data: {
+            labels: volumePoints.map(dp => dp.x.toLocaleDateString()),
+            datasets: [{
+                label: 'Total Volume Lifted (kg)',
+                data: volumePoints.map(dp => dp.y),
+                backgroundColor: 'rgba(56, 189, 248, 0.6)',
+                borderColor: '#38bdf8',
+                borderWidth: 2,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
             },
             plugins: { legend: { labels: { color: '#f8fafc', font: { size: 14 } } } }
         }
