@@ -43,22 +43,22 @@
     - **Açıklama:** Kullanıcının günlük veya haftalık kilo verilerini sisteme kaydetmesini sağlar. Gelişim grafiklerini besler.
 
 
-13. **Antrenman Silme**
+12. **Antrenman Silme**
     - **API Metodu:** `DELETE /workouts/{id}`
     - **Açıklama:** Belirtilen antrenmanı ve bu antrenmana bağlı tüm egzersiz kayıtlarını sistemden kalıcı olarak siler.
 
-14. **Profil Bilgisi Getirme (Web Uyumlu)**
+13. **Profil Bilgisi Getirme (Web Uyumlu)**
     - **API Metodu:** `GET /users/profile`
     - **Açıklama:** Frontend için sisteme giriş yapmış kullanıcının kayıtlı boy, kilo, vb. temel bilgilerini döndürür.
 
-15. **Hedefleri Listeleme**
+14. **Hedefleri Listeleme**
     - **API Metodu:** `GET /goals`
     - **Açıklama:** Kullanıcının kaydetmiş olduğu aktif ve tamamlanmış hedeflerin listesini döner.
 
-16. **Hedef Durumu Güncelleme (Geçiş)**
+15. **Hedef Durumu Güncelleme (Geçiş)**
     - **API Metodu:** `PUT /goals/{id}/toggle`
     - **Açıklama:** Belirli bir hedefin durumunu "tamamlandı/tamamlanmadı" şeklinde hızlıca tersine çevirir (Toggle).
 
-17. **Ağırlık Geçmişi Listeleme**
+16. **Ağırlık Geçmişi Listeleme**
     - **API Metodu:** `GET /metrics/weight`
     - **Açıklama:** Kullanıcının zaman içinde girdiği kilo ölçümlerinin listesini tarih sırasına göre chart verisi olarak sağlamak için getirir.

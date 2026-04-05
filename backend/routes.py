@@ -236,7 +236,7 @@ async def get_weight_history(current_user: dict = Depends(get_current_user)):
         del m["_id"]
     return metrics
 
-# 13. Antrenman Silme
+# 12. Antrenman Silme
 @router.delete("/workouts/{id}")
 async def delete_workout(id: str, current_user: dict = Depends(get_current_user)):
     db = get_db()
