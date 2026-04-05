@@ -76,10 +76,4 @@ class WeightMetric(BaseModel):
     weight: float
     date: datetime = Field(default_factory=datetime.utcnow)
 
-class AIRecommendationRequest(BaseModel):
-    pass
 
-
-class AIRecommendationResponse(BaseModel):
-    recommended_workout: str
-    reasoning: str

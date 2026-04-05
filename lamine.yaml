@@ -156,15 +156,6 @@ paths:
         "200":
           description: Profil güncellendi.
 
-  # 12. Yapay Zeka Destekli Antrenman Önerisi
-  /ai/recommendations:
-    post:
-      tags: [Hedefler ve Yapay Zeka]
-      summary: AI Antrenman Önerisi
-      description: Geçmiş verileri analiz ederek program oluşturur.
-      responses:
-        "200":
-          description: Öneri oluşturuldu.
 
   /goals:
     get:

@@ -322,19 +322,7 @@ async function handleProfileUpdate(e) {
     }
 }
 
-async function getAIRecommendation() {
-    const resDiv = document.getElementById('ai-result');
-    resDiv.innerHTML = '<div class="glow-text">Analyzing your history with AI...</div>';
-    try {
-        const res = await API.getAIRecommendation();
-        resDiv.innerHTML = `
-            <strong style="color:var(--primary); font-size:1.1rem">${res.recommended_workout}</strong>
-            <p style="margin-top: 0.5rem; color: var(--text-muted);">${res.reasoning}</p>
-        `;
-    } catch (e) {
-        resDiv.innerHTML = `<span class="error-msg">Error: ${e.message}</span>`;
-    }
-}
+
 
 // ------ Chart & Global Data ------
 function capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1); }

@@ -3,7 +3,7 @@ from typing import List
 from fastapi.security import OAuth2PasswordRequestForm
 from models import (UserCreate, UserResponse, UserProfileUpdate, 
                     ExerciseAdd, ExerciseResponse, WorkoutNoteUpdate, WorkoutResponse,
-                    GoalAdd, GoalResponse, WeightMetric, AIRecommendationRequest, AIRecommendationResponse)
+                    GoalAdd, GoalResponse, WeightMetric)
 from database import get_db
 from bson import ObjectId
 import datetime
@@ -249,10 +249,3 @@ async def delete_workout(id: str, current_user: dict = Depends(get_current_user)
     await db.exercises.delete_many({"workout_id": id})
     return {"message": "Workout and associated exercises deleted successfully"}
 
-# 12. Yapay Zeka Destekli Antrenman Önerisi (Mocked)
-@router.post("/ai/recommendations", response_model=AIRecommendationResponse)
-async def ai_recommend(req: AIRecommendationRequest, current_user: dict = Depends(get_current_user)):
-    return AIRecommendationResponse(
-        recommended_workout="Push Day (Chest, Shoulders, Triceps)",
-        reasoning="Based on your past 3 workouts which focused on Pull and Legs, it's optimal to target Push muscles today to allow for adequate recovery."
-    )

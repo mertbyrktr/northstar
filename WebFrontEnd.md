@@ -30,5 +30,5 @@ Bu doküman, Northstar uygulamasının web arayüzünün (Web Front-End) mimari 
 ## Temel Özellikler
 - **Kimlik Doğrulama**: Gerçek zamanlı üyelik ve token kalıcılığı. 
 - **Tracker**: Seçilen antrenman bağlamında veriler parse edilerek maksimum ağırlık (PR) gelişimi dinamik line grafiğinde gösterilir.
-- **AI ve Profil**: Backend destekli kısımlardan bilgiyi alıp frontend DOM elementlerinde anlık render alır.
+- **Profil Yönetimi**: Backend destekli kısımlardan bilgiyi alıp frontend DOM elementlerinde anlık render alır.
 - **Goals (Hedefler)**: Hedeflere özgü üstü çizme (completion) toggle aksiyonları görsel bir dinamiklikle eklenmiştir.

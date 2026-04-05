@@ -46,9 +46,6 @@
     - **API Metodu:** `POST /metrics/weight`
     - **Açıklama:** Kullanıcının günlük veya haftalık kilo verilerini sisteme kaydetmesini sağlar. Gelişim grafiklerini besler.
 
-12. **Yapay Zeka Destekli Antrenman Önerisi**
-    - **API Metodu:** `POST /ai/recommendations`
-    - **Açıklama:** (AI-Based) Kullanıcının geçmiş verilerini analiz ederek o gün yapması gereken en uygun antrenman programını oluşturur.
 
 13. **Antrenman Silme**
     - **API Metodu:** `DELETE /workouts/{id}`

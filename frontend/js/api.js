@@ -78,6 +78,7 @@ class API {
         return await this.request('/metrics/weight', 'POST', { weight: parseFloat(weight) });
     }
     static async getAIRecommendation() { 
-        return await this.request('/ai/recommendations', 'POST', { current_focus: "general fitness" }); 
+        // Deprecated
+        return null;
     }
 }
