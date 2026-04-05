@@ -1,4 +1,5 @@
 import os
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ def get_db():
 
 async def connect_to_mongo():
     global client, db
-    client = AsyncIOMotorClient(MONGODB_URI)
+    client = AsyncIOMotorClient(MONGODB_URI, tlsCAFile=certifi.where())
     db = client[DB_NAME]
     print("Connected to MongoDB!")
 
