@@ -10,7 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import connect_to_mongo, close_mongo_connection
 from routes import router as api_router
 
-app = FastAPI(title="Northstar Gym Tracker API", version="1.0.0")
+app = FastAPI(
+    title="Northstar Gym Tracker API", 
+    version="1.0.0",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json"
+)
 
 # Setup CORS
 app.add_middleware(
@@ -31,9 +36,9 @@ async def shutdown_db_client():
 
 app.include_router(api_router, prefix="/api/v1")
 
-@app.get("/")
+@app.get("/api")
 def root():
-    return {"message": "Welcome to Northstar API. Access the docs at /docs"}
+    return {"message": "Welcome to Northstar API. Access the docs at /api/docs"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
