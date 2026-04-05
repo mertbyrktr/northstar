@@ -134,8 +134,15 @@ paths:
         "204":
           [cite_start]description: Silme başarılı. [cite: 127]
 
-  # 6. Profil Bilgisi Güncelleme
+  # 6. Profil Bilgisi
   /users/profile:
+    get:
+      tags: [Profil ve Metrikler]
+      summary: Profil Bilgilerini Al
+      description: Kullanıcının profil verilerini getirir.
+      responses:
+        "200":
+          description: Profil getirildi.
     put:
       tags: [Profil ve Metrikler]
       summary: Profil Güncelleme
@@ -158,6 +165,38 @@ paths:
       responses:
         "200":
           description: Öneri oluşturuldu.
+
+  /goals:
+    get:
+      tags: [Hedefler ve Yapay Zeka]
+      summary: Hedefleri Listeleme
+      description: Kullanıcının belirlediği hedefleri getirir.
+      responses:
+        "200":
+          description: Hedefler listelendi.
+
+  /goals/{id}/toggle:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string}
+    put:
+      tags: [Hedefler ve Yapay Zeka]
+      summary: Hedef Durumu Güncelleme
+      description: Hedef tamamlanma statüsünü değiştirir.
+      responses:
+        "200":
+          description: Durum başarıyla güncellendi.
+
+  /metrics/weight:
+    get:
+      tags: [Profil ve Metrikler]
+      summary: Ağırlık Takibi Geçmişi
+      description: Kaydedilmiş ağırlık verilerini grafikte kullanılmak üzere listeler.
+      responses:
+        "200":
+          description: Metrikler getirildi.
 
 components:
   securitySchemes:
