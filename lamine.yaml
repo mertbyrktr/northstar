@@ -157,15 +157,6 @@ paths:
           description: Profil güncellendi.
 
 
-  /goals:
-    get:
-      tags: [Hedefler ve Yapay Zeka]
-      summary: Hedefleri Listeleme
-      description: Kullanıcının belirlediği hedefleri getirir.
-      responses:
-        "200":
-          description: Hedefler listelendi.
-
   /goals/{id}/toggle:
     parameters:
       - name: id
@@ -179,6 +170,16 @@ paths:
       responses:
         "200":
           description: Durum başarıyla güncellendi.
+
+
+  /goals:
+    get:
+      tags: [Hedefler ve Yapay Zeka]
+      summary: Hedefleri Listeleme
+      description: Kullanıcının belirlediği hedefleri getirir.
+      responses:
+        "200":
+          description: Hedefler listelendi.
 
   /metrics/weight:
     get:
