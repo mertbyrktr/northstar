@@ -7,6 +7,13 @@ This project uses **FastAPI, Async MongoDB (Motor)** for a highly concurrent bac
 
 ---
 
+**Proje Linkleri**
+
+REST API Adresi: https://northstar-nine-zeta.vercel.app/api/docs
+Web Front-End Adresi: https://northstar-nine-zeta.vercel.app/
+
+---
+
 **Proje Kategorisi:** 
 Kişisel gelişim takip uygulaması
 
