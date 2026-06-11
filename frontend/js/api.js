@@ -1,5 +1,18 @@
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_URL = isLocal ? 'http://127.0.0.1:8000/api/v1' : '/api/v1';
+const isCapacitor = window.location.protocol === 'capacitor:' || 
+                    (window.location.hostname === 'localhost' && window.location.port === '') || 
+                    !!window.Capacitor;
+
+let API_URL = '/api/v1';
+if (isCapacitor) {
+    // Mobil uygulamada varsayılan olarak canlı sunucuyu kullanır,
+    // ancak yerel testler için localStorage üzerinden değiştirilebilir.
+    // Örnek (Simulator): localStorage.setItem('northstar_api_url', 'http://localhost:8000/api/v1')
+    // Örnek (iPhone): localStorage.setItem('northstar_api_url', 'http://<MAC-IP>:8000/api/v1')
+    API_URL = localStorage.getItem('northstar_api_url') || 'https://northstar-nine-zeta.vercel.app/api/v1';
+} else if (isLocal) {
+    API_URL = 'http://127.0.0.1:8000/api/v1';
+}
 
 class API {
     static getToken() {

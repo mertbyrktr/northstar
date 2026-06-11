@@ -27,7 +27,7 @@ pipeline {
 
     post {
         success {
-            echo 'Deploy basarili: mekanbul calisiyor.'
+            echo 'Deploy basarili: northstar calisiyor.'
         }
         failure {
             echo 'Deploy basarisiz: loglari kontrol et.'
