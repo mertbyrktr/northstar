@@ -5,6 +5,7 @@ from models import (UserCreate, UserResponse, UserProfileUpdate,
                     ExerciseAdd, ExerciseResponse, WorkoutNoteUpdate, WorkoutResponse,
                     GoalAdd, GoalResponse, WeightMetric)
 from database import get_db, get_redis
+from rabbitmq import publish_message
 from bson import ObjectId
 import datetime
 import bcrypt
@@ -49,6 +50,17 @@ async def register(user: UserCreate):
     }
     result = await db.users.insert_one(new_user)
     created_user = await db.users.find_one({"_id": result.inserted_id})
+
+    # Publish welcome email event to RabbitMQ
+    try:
+        await publish_message("welcome_emails", {
+            "user_id": str(created_user["_id"]),
+            "email": created_user["email"],
+            "name": created_user["name"]
+        })
+    except Exception as e:
+        print(f"Error publishing welcome email: {e}")
+
     return fix_id(created_user)
 
 # 2. Kullanıcı Girişi
@@ -379,4 +391,18 @@ async def delete_workout(id: str, current_user: dict = Depends(get_current_user)
             print(f"Redis delete error: {e}")
 
     return {"message": "Workout and associated exercises deleted successfully"}
+
+# 13. RabbitMQ Test Endpoint
+@router.post("/test/publish-task")
+async def test_publish_task(task_type: str, payload: dict):
+    if task_type not in ["welcome_email", "workout_summary"]:
+        raise HTTPException(status_code=400, detail="Invalid task_type. Must be welcome_email or workout_summary")
+    
+    if task_type == "welcome_email":
+        queue_name = "welcome_emails"
+    else:
+        queue_name = "workout_summaries"
+        
+    await publish_message(queue_name, payload)
+    return {"message": f"Successfully published task to {queue_name} queue", "payload": payload}
 

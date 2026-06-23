@@ -3,6 +3,7 @@ import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 import redis.asyncio as redis
 from dotenv import load_dotenv
+from rabbitmq import connect_rabbitmq, close_rabbitmq
 
 load_dotenv()
 
@@ -54,3 +55,9 @@ async def close_redis_connection():
     if redis_client:
         await redis_client.aclose()
         print("Disconnected from Redis!")
+
+async def connect_to_rabbitmq():
+    await connect_rabbitmq()
+
+async def close_rabbitmq_connection():
+    await close_rabbitmq()
