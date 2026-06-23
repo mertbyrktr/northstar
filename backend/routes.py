@@ -4,10 +4,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from models import (UserCreate, UserResponse, UserProfileUpdate, 
                     ExerciseAdd, ExerciseResponse, WorkoutNoteUpdate, WorkoutResponse,
                     GoalAdd, GoalResponse, WeightMetric)
-from database import get_db
+from database import get_db, get_redis
 from bson import ObjectId
 import datetime
 import bcrypt
+import json
+from fastapi.encoders import jsonable_encoder
 from auth import get_current_user, create_access_token
 
 router = APIRouter()
@@ -78,11 +80,30 @@ async def add_exercise(exercise: ExerciseAdd, current_user: dict = Depends(get_c
     new_exercise = exercise.dict()
     result = await db.exercises.insert_one(new_exercise)
     created_ex = await db.exercises.find_one({"_id": result.inserted_id})
+
+    # Invalidate workouts cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:workouts:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return fix_id(created_ex)
 
 # 4. Antrenman Listeleme (Only Current User)
 @router.get("/workouts", response_model=List[WorkoutResponse])
 async def list_workouts(current_user: dict = Depends(get_current_user)):
+    redis_client = get_redis()
+    cache_key = f"user:workouts:{current_user['id']}"
+    if redis_client:
+        try:
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception as e:
+            print(f"Redis get error: {e}")
+
     db = get_db()
     workouts_cursor = db.workouts.find({"user_id": current_user["id"]})
     workouts = []
@@ -97,6 +118,13 @@ async def list_workouts(current_user: dict = Depends(get_current_user)):
         w.pop("_id")
         w["exercises"] = exs
         workouts.append(w)
+
+    if redis_client:
+        try:
+            await redis_client.setex(cache_key, 600, json.dumps(jsonable_encoder(workouts)))
+        except Exception as e:
+            print(f"Redis set error: {e}")
+
     return workouts
 
 # 5. Egzersiz Detaylarını Gör
@@ -125,17 +153,22 @@ async def update_profile(profile: UserProfileUpdate, current_user: dict = Depend
         return {"message": "No data provided to update"}
         
     await db.users.update_one({"_id": ObjectId(current_user["id"])}, {"$set": update_data})
+
+    # Invalidate user profile cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:profile:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Profile updated successfully"}
 
 # GET Profil Bilgisi
 @router.get("/users/profile")
 async def get_profile(current_user: dict = Depends(get_current_user)):
-    db = get_db()
-    user = await db.users.find_one({"_id": ObjectId(current_user["id"])})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    user["id"] = str(user["_id"])
-    del user["_id"]
+    # Return user profile directly from cached/current_user (removing password)
+    user = current_user.copy()
     if "password" in user:
         del user["password"]
     return user
@@ -153,6 +186,15 @@ async def update_workout_notes(id: str, note_data: WorkoutNoteUpdate, current_us
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Workout not found or not owned by user")
+
+    # Invalidate workouts cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:workouts:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Notes updated successfully"}
 
 # 8. Egzersiz Kaydını Silme
@@ -171,6 +213,15 @@ async def delete_exercise(id: str, current_user: dict = Depends(get_current_user
         raise HTTPException(status_code=403, detail="Not authorized to delete this exercise")
 
     await db.exercises.delete_one({"_id": ObjectId(id)})
+
+    # Invalidate workouts cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:workouts:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Exercise deleted successfully"}
 
 # 9. Hedef Ekleme
@@ -182,15 +233,42 @@ async def add_goal(goal: GoalAdd, current_user: dict = Depends(get_current_user)
     new_goal["is_completed"] = False
     result = await db.goals.insert_one(new_goal)
     created_goal = await db.goals.find_one({"_id": result.inserted_id})
+
+    # Invalidate goals cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:goals:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return fix_id(created_goal)
 
 # GET Hedefleri Listeleme
 @router.get("/goals", response_model=List[GoalResponse])
 async def get_goals(current_user: dict = Depends(get_current_user)):
+    redis_client = get_redis()
+    cache_key = f"user:goals:{current_user['id']}"
+    if redis_client:
+        try:
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception as e:
+            print(f"Redis get error: {e}")
+
     db = get_db()
     cursor = db.goals.find({"user_id": current_user["id"]})
     goals = await cursor.to_list(length=100)
-    return [fix_id(g) for g in goals]
+    formatted_goals = [fix_id(g) for g in goals]
+
+    if redis_client:
+        try:
+            await redis_client.setex(cache_key, 600, json.dumps(jsonable_encoder(formatted_goals)))
+        except Exception as e:
+            print(f"Redis set error: {e}")
+
+    return formatted_goals
 
 # PUT Hedef Tamamlanma Durumu (Toggle)
 @router.put("/goals/{id}/toggle")
@@ -203,6 +281,15 @@ async def toggle_goal(id: str, current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Goal not found")
     new_status = not goal.get("is_completed", False)
     await db.goals.update_one({"_id": ObjectId(id)}, {"$set": {"is_completed": new_status}})
+
+    # Invalidate goals cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:goals:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Goal toggled"}
 
 # 10. Hedef Silme
@@ -214,6 +301,15 @@ async def delete_goal(id: str, current_user: dict = Depends(get_current_user)):
     result = await db.goals.delete_one({"_id": ObjectId(id), "user_id": current_user["id"]})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Goal not found or not authorized")
+
+    # Invalidate goals cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:goals:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Goal deleted successfully"}
 
 # 11. Ağırlık Takibi
@@ -223,17 +319,43 @@ async def track_weight(metric: WeightMetric, current_user: dict = Depends(get_cu
     new_metric = metric.dict()
     new_metric["user_id"] = current_user["id"]
     result = await db.metrics.insert_one(new_metric)
+
+    # Invalidate weight history cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:weight_history:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Weight recorded successfully", "id": str(result.inserted_id)}
 
 # GET Ağırlık Takibi Geçmişi
 @router.get("/metrics/weight")
 async def get_weight_history(current_user: dict = Depends(get_current_user)):
+    redis_client = get_redis()
+    cache_key = f"user:weight_history:{current_user['id']}"
+    if redis_client:
+        try:
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except Exception as e:
+            print(f"Redis get error: {e}")
+
     db = get_db()
     cursor = db.metrics.find({"user_id": current_user["id"]}).sort("date", 1)
     metrics = await cursor.to_list(length=100)
     for m in metrics:
         m["id"] = str(m["_id"])
         del m["_id"]
+
+    if redis_client:
+        try:
+            await redis_client.setex(cache_key, 600, json.dumps(jsonable_encoder(metrics)))
+        except Exception as e:
+            print(f"Redis set error: {e}")
+
     return metrics
 
 # 12. Antrenman Silme
@@ -247,5 +369,14 @@ async def delete_workout(id: str, current_user: dict = Depends(get_current_user)
         raise HTTPException(status_code=404, detail="Workout not found or not authorized")
     await db.workouts.delete_one({"_id": ObjectId(id)})
     await db.exercises.delete_many({"workout_id": id})
+
+    # Invalidate workouts cache
+    redis_client = get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"user:workouts:{current_user['id']}")
+        except Exception as e:
+            print(f"Redis delete error: {e}")
+
     return {"message": "Workout and associated exercises deleted successfully"}
 

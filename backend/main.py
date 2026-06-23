@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import connect_to_mongo, close_mongo_connection
+from database import connect_to_mongo, close_mongo_connection, connect_to_redis, close_redis_connection
 from routes import router as api_router
 
 app = FastAPI(
@@ -29,10 +29,12 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_db_client():
     await connect_to_mongo()
+    await connect_to_redis()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     await close_mongo_connection()
+    await close_redis_connection()
 
 app.include_router(api_router, prefix="/api/v1")
 

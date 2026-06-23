@@ -7,6 +7,15 @@ services:
       - "8000:8000"
     environment:
       - MONGODB_URI=${MONGODB_URI}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     restart: always
 
   frontend:
