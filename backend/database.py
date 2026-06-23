@@ -5,7 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_URI = os.getenv("MONGODB_URI")
+if not MONGODB_URI:
+    print("WARNING: MONGODB_URI environment variable is empty or not set. Defaulting to local MongoDB: mongodb://localhost:27017")
+    MONGODB_URI = "mongodb://localhost:27017"
 DB_NAME = "northstar_db"
 
 client = None
