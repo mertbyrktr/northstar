@@ -1,3 +1,4 @@
+.env
 .postman/
 backend/.env
 backend/venv/
